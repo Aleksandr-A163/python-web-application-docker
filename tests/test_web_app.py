@@ -8,6 +8,16 @@ from fastapi.testclient import TestClient
 from phonebook.web.application import create_app
 
 
+def test_ping_returns_pong_without_redirect(tmp_path: Path) -> None:
+    client = TestClient(create_app(data_path=tmp_path / "contacts.json"))
+
+    response = client.get("/ping/", follow_redirects=False)
+
+    assert response.status_code == 200
+    assert response.headers["content-type"] == "application/json"
+    assert response.json() == {"message": "pong"}
+
+
 def test_pages_are_registered_and_render_templates(tmp_path: Path) -> None:
     application = create_app(data_path=tmp_path / "contacts.json")
     client = TestClient(application)

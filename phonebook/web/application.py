@@ -8,6 +8,7 @@ from fastapi.staticfiles import StaticFiles
 from phonebook.model import FileReader, FileWriter, PhoneBook
 from phonebook.web.api.router import router as api_router
 from phonebook.web.dependencies import ContactWriter
+from phonebook.web.health import router as health_router
 from phonebook.web.pages import router as pages_router
 
 
@@ -34,6 +35,7 @@ def create_app(
         name="static",
     )
     application.include_router(pages_router)
+    application.include_router(health_router)
     application.include_router(api_router)
     return application
 

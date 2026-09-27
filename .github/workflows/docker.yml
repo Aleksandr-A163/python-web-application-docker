@@ -1,0 +1,25 @@
+name: Docker build and smoke test
+
+on: [push, pull_request]
+
+permissions:
+  contents: read
+
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build image and run project tests
+        run: docker build -t python-web-application-docker:ci .
+      - name: Start application
+        run: docker run -d --name phonebook-ci -p 127.0.0.1:8000:8000 python-web-application-docker:ci
+      - name: Verify ping endpoint
+        run: |
+          curl --fail --silent --show-error --retry 10 --retry-connrefused --retry-delay 1 http://127.0.0.1:8000/ping/ -o /tmp/ping.json
+          python -c 'import json; assert json.load(open("/tmp/ping.json")) == {"message": "pong"}'
+      - name: Show logs and remove test container
+        if: always()
+        run: |
+          docker logs phonebook-ci || true
+          docker rm -f phonebook-ci || true

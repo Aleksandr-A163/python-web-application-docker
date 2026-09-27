@@ -1,4 +1,4 @@
-# Телефонный справочник
+# Телефонный справочник в Docker
 
 Учебное гибридное приложение для управления контактами на Python. Проект
 поддерживает консольный интерфейс, HTML-страницы на FastAPI и Jinja2, а также
@@ -6,6 +6,51 @@ JSON API. Контакты сохраняются в файле `contacts.json`.
 
 В основе проекта лежит единая предметная модель: CLI и веб-интерфейс используют
 один класс `PhoneBook` и не дублируют правила работы с контактами.
+
+Это отдельный репозиторий на основе
+[python-web-application](https://github.com/Aleksandr-A163/python-web-application)
+с сохранённой историей исходного проекта.
+
+## Запуск в Docker
+
+Установите Docker с поддержкой Linux-контейнеров (например, Docker Desktop).
+Локальная установка Python для этого способа запуска не требуется.
+
+```bash
+git clone https://github.com/Aleksandr-A163/python-web-application-docker.git
+cd python-web-application-docker
+docker build -t python-web-application-docker .
+docker run --rm --name phonebook-web -p 8000:8000 python-web-application-docker
+```
+
+Откройте главную страницу: <http://localhost:8000/>.
+Проверка доступности: <http://localhost:8000/ping/> — статус `200`, JSON
+`{"message":"pong"}`. Документация API: <http://localhost:8000/docs>.
+Для остановки нажмите `Ctrl+C` в терминале с контейнером.
+
+Dockerfile сначала копирует `requirements.txt` и устанавливает зависимости
+отдельным слоем, затем копирует приложение вместе с шаблонами и статикой.
+Отдельный этап `test` устанавливает зависимости разработки и запускает
+весь набор тестов с `-W error` и требованием покрытия 100%. Обычная сборка
+образа также зависит от успешного прохождения этого этапа.
+Итоговый образ не содержит установленных тестовых зависимостей и запускает
+Uvicorn от непривилегированного пользователя на `0.0.0.0:8000`.
+Порт объявлен через `EXPOSE 8000`; параметр `-p 8000:8000` публикует его
+на компьютере. См. [справочник Dockerfile](https://docs.docker.com/reference/dockerfile/).
+
+Только сборка тестового этапа:
+
+```bash
+docker build --target test -t python-web-application-docker:test .
+```
+
+GitHub Actions собирает образ, запускает тесты и проверяет `/ping/` после
+каждого push и pull request. Сборка не публикует образ в Docker Hub.
+
+Контейнер начинает работу с `contacts.json` из репозитория. Изменения данных
+хранятся внутри контейнера и при его удалении теряются. Для постоянного
+хранения можно подключить существующий файл с правами записи через bind mount
+по пути `/app/contacts.json`.
 
 ## Возможности
 
@@ -36,8 +81,8 @@ JSON API. Контакты сохраняются в файле `contacts.json`.
 Клонируйте репозиторий и перейдите в его каталог:
 
 ```bash
-git clone https://github.com/Aleksandr-A163/python-web-application.git
-cd python-web-application
+git clone https://github.com/Aleksandr-A163/python-web-application-docker.git
+cd python-web-application-docker
 ```
 
 Создайте виртуальное окружение:
